@@ -1,6 +1,7 @@
 from flask import Flask
 import rahul
 import andu
+import toon
 app = Flask(__name__)
 
 @app.route("/")
@@ -14,3 +15,7 @@ def rahul1():
 @app.route("/andu")
 def andu1():
     return andu.functie2()
+
+@app.route("/toon")
+def toon1():
+    return toon.functie3()
