@@ -1,4 +1,5 @@
 import requests, os, bs4, lxml, re
+import pandas as pd
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
@@ -57,22 +58,15 @@ def functie3():
                 event_name = link[1].text.strip()
             else:
                 event_name = link[0].text.strip()
-            event_name = f"Name: {event_name}"
             
             # scrape venue
             venue = event.find('div', class_='ev3page-venue').text.strip()
-            venue = f"In: {venue}"
             
             # scrape hours
             hours = event.find('div', class_='ev3page-hour').text.strip()
-            hours = f"Hours: {hours}"
             
             # scrape week day
             week = event.find('div', class_='ev3page-week').text.strip()
-            week = f"Day: {week}"
-
-            # print 10 lines
-            line = '-'*10
 
             events_dict ={
                 'Name': event_name,
@@ -86,4 +80,6 @@ def functie3():
 
     # ! return the scraped information for each event
     events_dict = {'Events': events_list}
-    return(events_dict)
+    return(events_dict['Events'][0]['Date'])
+
+# {"Events":[{"Date":"Date: 31 Mar - 01 Apr","Day":"Vrijdag","Hours":"18:00 - 23:00","In":"GelreDome, Arnhem","Name":"Snollebollekes Live in Concert"},{"Date":"Date: 07 Apr - 09 Apr","Day":"Vrijdag","Hours":"12:00 - 23:00","In":"NDSM-Werf, Amsterdam","Name":"DGTL Amsterdam"}]}
