@@ -1,0 +1,7 @@
+requests
+re
+bs4
+flask
+os
+lxml
+pandas
