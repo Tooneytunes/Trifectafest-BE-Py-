@@ -1,29 +1,41 @@
+import requests, os, bs4, lxml, re
+from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+
+# relevant 'crawlable' information
+# ev3page-finish < start_date & end_date
+# ev3page < page-items
+# ev3page-title < title
+# ev3page-week < week day
+# ev3page-venue < venue
+# ev3page-day < day
+# ev3page-month < month
+# ev3page-year < year
+# ev3page-hour < hours
 
 def functie3():
     print("Retrieving data from https://festivalfans.nl/agenda/")
 
-    import requests, os, bs4, lxml, re
-    from datetime import datetime, timedelta
-    from bs4 import BeautifulSoup
-    
-    # relevant 'crawlable' information
-    # ev3page-finish < start_date & end_date
-    # ev3page < page-items
-    # ev3page-title < title
-    # ev3page-week < week day
-    # ev3page-venue < venue
-    # ev3page-day < day
-    # ev3page-month < month
-    # ev3page-year < year
-    # ev3page-hour < hours
-  
     urls = ['https://festivalfans.nl/agenda/']
+
+    events_list = []
 
     for url in urls:
         # request the URL and parse the HTML using BeautifulSoup
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
         
+        # <div class="ev3page">
+        ev3page_amount = r'<div>+class*=*["]ev3page*["]'
+        matches = re.search(ev3page_amount, str(soup), re.DOTALL)
+
+        if matches:
+            div_content = matches.group(1)
+            ev3page_number = int(re.sub(r'\D', '', div_content))
+            print(ev3page_number)
+        else:
+            print('No match found')
+
         # find all the div elements with class 'ev3page'
         events = soup.find_all('div', class_='ev3page')
         
@@ -62,5 +74,16 @@ def functie3():
             # print 10 lines
             line = '-'*10
 
-            # ! return the scraped information for each event
-            return(f"{event_name}<br/>{venue}<br/>{week}<br/>{date_range}<br/>{hours}<br/>{line}<br/>")
+            events_dict ={
+                'Name': event_name,
+                'In': venue,
+                'Day': week,
+                'Date': date_range,
+                'Hours': hours,
+            }
+
+            events_list.append(events_dict)
+
+    # ! return the scraped information for each event
+    events_dict = {'Events': events_list}
+    return(events_dict)
