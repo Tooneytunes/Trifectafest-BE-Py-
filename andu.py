@@ -1,106 +1,100 @@
-def functie2():
 
+
+import requests, os, bs4, lxml, re
+import pandas as pd
+from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+import sqlite3 as s3
+
+# relevant 'crawlable' information
+# ev3page-finish < start_date & end_date
+# ev3page < page-items
+# ev3page-title < title
+# ev3page-week < week day
+# ev3page-venue < venue
+# ev3page-day < day
+# ev3page-month < month
+# ev3page-year < year
+# ev3page-hour < hours
+
+def functie2():
     print("Retrieving data from https://festivalfans.nl/agenda/")
 
-    import requests, os, bs4, lxml,re
-    import pandas as pd
-    from datetime import datetime, timedelta
-    from bs4 import BeautifulSoup
+    urls = ['https://festivalfans.nl/agenda/']
 
-    # relevant 'crawlable' information
-    # ev3page-finish < start_date & end_date
-    # ev3page < page-items
-    # ev3page-title < name
-    # ev3page-week < week day
-    # ev3page-venue < venue
-    # ev3page-day < day
-    # ev3page-month < month
-    # ev3page-year < year
-    # ev3page-hour < hours
-    url = "https://festivalfans.nl/agenda/"
-    response = requests.get(url)
+    events_list = []
 
-    soup = BeautifulSoup(response.content, 'html.parser')
+    for url in urls:
+        # request the URL and parse the HTML using BeautifulSoup
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-    events = {}
+        # <div class="ev3page">
+        ev3page_amount = r'<div class="[^"]ev3page3[^"]">(.*?)<\/div>'
+        matches = re.search(ev3page_amount, str(soup), re.DOTALL)
 
-    for i, event in enumerate( soup.find_all("div", class_="ev3page")):
-
-    #  # <div class="ev3page">3
-    #     ev3page_amount = r'<div>+class*=*["]ev3page*["]'
-    #     matches = re.search(ev3page_amount, str(soup), re.DOTALL)
-
-      #scrape event name
-        link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
-        if len(link) > 1:
-            event_name = link[1].text.strip()
+        if matches:
+            div_content = matches.group(1)
+            ev3page_number = int(re.sub(r'\D', '', div_content))
+            print(ev3page_number)
         else:
-            event_name = link[0].text.strip()
+            print('No match found')
 
-        date = event.find("div", class_="ev3page-finish ").text.strip()
+        # find all the div elements with class 'ev3page'
+        events = soup.find_all('div', class_='ev3page')
 
-        location = event.find("div", class_="ev3page-location").text.strip()
+        # loop through each event and scrape the relevant information
+        for event in events:
+            # scrape start and end date
+            element = event.find('div', class_='ev3page-finish')
 
-        events[i] = {
-            "Name": event_name,
-            "Date": date,
-            "Location": location
-        }
+            if element is not None:
+                start_date = event.find('div', class_='ev3page-finish').text.strip()
+                end_date = event.find_all('div', class_='ev3page-finish')[-1].text.strip()
+            else:
+                continue
+            date_range = f"{start_date} - {end_date}"
 
-        events.append(event)
-        # event_item = {"events":events}
-        # df = pd.DataFrame.from_dict(events)
-        df = pd.DataFrame.from_dict(events, orient='index')
+            # scrape event name
+            link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
+            if len(link) > 1:
+                event_name = link[1].text.strip()
+            else:
+                event_name = link[0].text.strip()
 
-        return(df)
+            # scrape venue
+            venue = event.find('div', class_='ev3page-venue').text.strip()
 
+            # scrape hours
+            hours = event.find('div', class_='ev3page-hour').text.strip()
 
-    # urls = ['https://festivalfans.nl/agenda/']
+            # scrape week day
+            week = event.find('div', class_='ev3page-week').text.strip()
 
-    # for url in urls:
-    #     # request the URL and parse the HTML using BeautifulSoup
-    #     response = requests.get(url)
-    #     soup = BeautifulSoup(response.content, 'html.parser')
+            events_dict ={
+                'Name': event_name,
+                'In': venue,
+                'Day': week,
+                'Date': date_range,
+                'Hours': hours,
+            }
 
-    #     # find all the div elements with class 'ev3page'
-    #     events = soup.find_all('div', class_='ev3page')
+            events_list.append(events_dict)
 
+    # ! return the scraped information for each event
+    events_dict = {'Events': events_list}
 
+    for k in events_dict['Events'][::]:
+        print(k)
 
-        # # loop through each event and scrape the relevant information
-        # for event in events:
-        #     # scrape start and end date
-        #     element = event.find('div', class_='ev3page-finish')
+    df = pd.DataFrame.from_dict(events_dict['Events'][::])
+    print(df)
 
-        #     if element is not None:
-        #         start_date = event.find('div', class_='ev3page-finish').text.strip()
-        #         end_date = event.find_all('div', class_='ev3page-finish')[-1].text.strip()
-        #     else:
-        #         continue
-        #     date_range = f"Date: {start_date} - {end_date}"
+    return(pd.DataFrame.to_sql(df))
 
-            # # scrape event name
-            # link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
-            # if len(link) > 1:
-            #     event_name = link[1].text.strip()
-            # else:
-            #     event_name = link[0].text.strip()
-            # event_name = f"Name: {event_name}"
+# conn = sqlite3.connect('festivals.db')
+# df.to_sql('events', conn, if_exists='replace', index=False)
 
-            # # scrape venue
-            # venue = event.find('div', class_='ev3page-venue').text.strip()
-            # venue = f"In: {venue}"
+#     conn.close()
 
-            # # scrape hours
-            # hours = event.find('div', class_='ev3page-hour').text.strip()
-            # hours = f"Hours: {hours}"
-
-            # # scrape week day
-            # week = event.find('div', class_='ev3page-week').text.strip()
-            # week = f"Day: {week}"
-
-            # # print 10 lines
-            # line = '-'*10
-
-            # # ! return the scraped information for each event
-            # return(f"{event_name}<br/>{venue}<br/>{week}<br/>{date_range}<br/>{hours}<br/>{line}<br/>")
+# {"Events":[{"Date":"Date: 31 Mar - 01 Apr","Day":"Vrijdag","Hours":"18:00 - 23:00","In":"GelreDome, Arnhem","Name":"Snollebollekes Live in Concert"},{"Date":"Date: 07 Apr - 09 Apr","Day":"Vrijdag","Hours":"12:00 - 23:00","In":"NDSM-Werf, Amsterdam","Name":"DGTL Amsterdam"}]}
