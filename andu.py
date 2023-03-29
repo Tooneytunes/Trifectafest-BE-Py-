@@ -17,45 +17,42 @@ def functie2():
     # ev3page-month < month
     # ev3page-year < year
     # ev3page-hour < hours
-    url = "https://festivalfans.nl/event/"
+    url = "https://festivalfans.nl/agenda/"
     response = requests.get(url)
 
     soup = BeautifulSoup(response.content, 'html.parser')
 
-    events = []
+    events = {}
 
-    for event in soup.find_all("div", class_="ev3page"):
+    for i, event in enumerate( soup.find_all("div", class_="ev3page")):
 
-     # <div class="ev3page">
-        ev3page_amount = r'<div>+class*=*["]ev3page*["]'
-        matches = re.search(ev3page_amount, str(soup), re.DOTALL)
+    #  # <div class="ev3page">3
+    #     ev3page_amount = r'<div>+class*=*["]ev3page*["]'
+    #     matches = re.search(ev3page_amount, str(soup), re.DOTALL)
 
-      # scrape event name
+      #scrape event name
         link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
         if len(link) > 1:
             event_name = link[1].text.strip()
         else:
             event_name = link[0].text.strip()
-            event_name = f"Name: {event_name}"
 
         date = event.find("div", class_="ev3page-finish ").text.strip()
 
-
-
         location = event.find("div", class_="ev3page-location").text.strip()
 
-        event_item = {
-            "name": event_name,
-            "date": date,
-            "location": location
+        events[i] = {
+            "Name": event_name,
+            "Date": date,
+            "Location": location
         }
 
-        events.append(event_item)
-        event_item = {"events":events}
+        events.append(event)
+        # event_item = {"events":events}
         # df = pd.DataFrame.from_dict(events)
+        df = pd.DataFrame.from_dict(events, orient='index')
 
-
-        return(event_item['event'][0]["name"])
+        return(df)
 
 
     # urls = ['https://festivalfans.nl/agenda/']
