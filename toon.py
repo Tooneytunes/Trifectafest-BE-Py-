@@ -27,7 +27,7 @@ def functie3():
         soup = BeautifulSoup(response.content, 'html.parser')
         
         # <div class="ev3page">
-        ev3page_amount = r'<div>+class*=*["]ev3page*["]'
+        ev3page_amount = r'<div class="[^"]ev3page3[^"]">(.*?)<\/div>'
         matches = re.search(ev3page_amount, str(soup), re.DOTALL)
 
         if matches:
@@ -77,9 +77,13 @@ def functie3():
             }
 
             events_list.append(events_dict)
-
+            
     # ! return the scraped information for each event
     events_dict = {'Events': events_list}
-    return(events_dict['Events'][0]['Date'])
+
+    for k in events_dict['Events'][::]:
+        print(k['Date'])
+
+    return(events_dict['Events'][::])
 
 # {"Events":[{"Date":"Date: 31 Mar - 01 Apr","Day":"Vrijdag","Hours":"18:00 - 23:00","In":"GelreDome, Arnhem","Name":"Snollebollekes Live in Concert"},{"Date":"Date: 07 Apr - 09 Apr","Day":"Vrijdag","Hours":"12:00 - 23:00","In":"NDSM-Werf, Amsterdam","Name":"DGTL Amsterdam"}]}
