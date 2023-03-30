@@ -90,7 +90,7 @@ def functie2():
     df = pd.DataFrame.from_dict(events_dict['Events'][::])
     print(df)
 
-    return(pd.DataFrame.to_sql(df))
+    return(pd.DataFrame.to_html(df))
 
 # conn = sqlite3.connect('festivals.db')
 # df.to_sql('events', conn, if_exists='replace', index=False)
