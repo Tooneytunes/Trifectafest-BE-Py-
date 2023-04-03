@@ -1,5 +1,3 @@
-
-
 import requests, os, bs4, lxml, re
 import pandas as pd
 from datetime import datetime, timedelta
@@ -18,79 +16,112 @@ import sqlite3 as s3
 # ev3page-hour < hours
 
 def functie2():
-    print("Retrieving data from https://festivalfans.nl/agenda/")
 
-    urls = ['https://festivalfans.nl/agenda/']
+    # # Read from recipe URL List
+    # with open('festivals.json', 'w') as f:
+    #     festivals = f.readlines()
 
-    events_list = []
+    # # Checking if file doesn't exist yet
+    # if os.path.exists("festivals.json"):
+    #     os.remove("festivals.json")
+    # else:
+    #     print("File is not present in system, making file")
 
-    for url in urls:
-        # request the URL and parse the HTML using BeautifulSoup
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
+# Make a file containing recipe information
+    # with open('recipe.txt', 'a', encoding='utf-8') as f:
 
-        # <div class="ev3page">
-        ev3page_amount = r'<div class="[^"]ev3page3[^"]">(.*?)<\/div>'
-        matches = re.search(ev3page_amount, str(soup), re.DOTALL)
+        print("Retrieving data from https://festivalfans.nl/agenda/")
 
-        if matches:
-            div_content = matches.group(1)
-            ev3page_number = int(re.sub(r'\D', '', div_content))
-            print(ev3page_number)
-        else:
-            print('No match found')
+        urls = ['https://festivalfans.nl/agenda/']
 
-        # find all the div elements with class 'ev3page'
-        events = soup.find_all('div', class_='ev3page')
+        events_list = []
+        counter = 0
 
-        # loop through each event and scrape the relevant information
-        for event in events:
-            # scrape start and end date
-            element = event.find('div', class_='ev3page-finish')
+        for url in urls:
+            # request the URL and parse the HTML using BeautifulSoup
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-            if element is not None:
-                start_date = event.find('div', class_='ev3page-finish').text.strip()
-                end_date = event.find_all('div', class_='ev3page-finish')[-1].text.strip()
+            # <div class="ev3page">
+            ev3page_amount = r'<div class="[^"]ev3page3[^"]">(.*?)<\/div>'
+            matches = re.search(ev3page_amount, str(soup), re.DOTALL)
+
+            if matches:
+                div_content = matches.group(1)
+                ev3page_number = int(re.sub(r'\D', '', div_content))
+                print(ev3page_number)
             else:
-                continue
-            date_range = f"{start_date} - {end_date}"
+                print('No match found')
 
-            # scrape event name
-            link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
-            if len(link) > 1:
-                event_name = link[1].text.strip()
-            else:
-                event_name = link[0].text.strip()
+            # find all the div elements with class 'ev3page'
+            events = soup.find_all('div', class_='ev3page')
 
-            # scrape venue
-            venue = event.find('div', class_='ev3page-venue').text.strip()
+            # loop through each event and scrape the relevant information
+            for event in events:
+                # scrape start and end date
+                element = event.find('div', class_='ev3page-finish')
 
-            # scrape hours
-            hours = event.find('div', class_='ev3page-hour').text.strip()
+                if element is not None:
+                    start_date = event.find('div', class_='ev3page-finish').text.strip()
+                    end_date = event.find_all('div', class_='ev3page-finish')[-1].text.strip()
+                else:
+                    continue
+                date_range = f"{start_date} - {end_date}"
+                counter +=1
 
-            # scrape week day
-            week = event.find('div', class_='ev3page-week').text.strip()
+                # scrape event name
+                link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
+                if len(link) > 1:
+                    event_name = link[1].text.strip()
+                else:
+                    event_name = link[0].text.strip()
 
-            events_dict ={
-                'Name': event_name,
-                'In': venue,
-                'Day': week,
-                'Date': date_range,
-                'Hours': hours,
-            }
+                # scrape venue
+                venue = event.find('div', class_='ev3page-venue').text.strip()
 
-            events_list.append(events_dict)
+                # scrape hours
+                hours = event.find('div', class_='ev3page-hour').text.strip()
 
-    # ! return the scraped information for each event
-    events_dict = {'Events': events_list}
+                # scrape week day
+                week = event.find('div', class_='ev3page-week').text.strip()
 
-    for k in events_dict['Events'][::]:
-        print(k)
+                events_dict ={
+                    'Index': counter,
+                    'Name': event_name,
+                    'In': venue,
+                    'Day': week,
+                    'Date': date_range,
+                    'Hours': hours,
+                }
 
-    df = pd.DataFrame.from_dict(events_dict['Events'][::])
-    print(df)
+                events_list.append(events_dict)
 
-    return(pd.DataFrame.to_html(df))
+        # ! return the scraped information for each event
+        events_dict = {'Events': events_list}
+
+        for k in events_dict['Events'][::]:
+            print(k)
+
+        df = pd.DataFrame.from_dict(events_dict['Events'][::])
+        print(df)
+
+        df.to_json(r'C:\Users\Admin\Desktop\school en werk\young capital\project\Trifectafest-BE-Python\festivals.json',
+                orient= 'table', index= False)
+
+        # # Append this festival to the file
+        # f.write(f"Name: {event_name}\n In: {venue}\n Day: {week}\n 'Date': {date_range}\n 'Hours': {hours}")
+        # print(f"Name: {event_name} has been added")
+        # for idx_events, event in enumerate(events):
+        #     f.write(f"- {event}\n")
+        #     # Make sure that there is an enter at the end of the ingredient list
+        #     if idx_events == len(events) - 1:
+        #         f.write("\n")
+
+
+
+
+
+
 
 # conn = sqlite3.connect('festivals.db')
 # df.to_sql('events', conn, if_exists='replace', index=False)
