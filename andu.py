@@ -99,14 +99,15 @@ def functie2():
         # ! return the scraped information for each event
         events_dict = {'Events': events_list}
 
-        for k in events_dict['Events'][::]:
-            print(k)
+        # for k in events_dict['Events'][::]:
+        #     print(k)
 
         df = pd.DataFrame.from_dict(events_dict['Events'][::])
         print(df)
 
-        df.to_json(r'C:\Users\Admin\Desktop\school en werk\young capital\project\Trifectafest-BE-Python\festivals.json',
-                orient= 'table', index= False)
+        return df.to_json(orient= 'table', index= False)
+
+
 
         # # Append this festival to the file
         # f.write(f"Name: {event_name}\n In: {venue}\n Day: {week}\n 'Date': {date_range}\n 'Hours': {hours}")
