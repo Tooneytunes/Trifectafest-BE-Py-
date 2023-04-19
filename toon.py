@@ -1,89 +1,118 @@
-import requests, os, bs4, lxml, re
-import pandas as pd
-from datetime import datetime, timedelta
-from bs4 import BeautifulSoup
+import io
+import os
+import barcode
+import qrcode
+from barcode import Code128
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.units import mm, cm
+from reportlab.lib import colors
+from barcode.writer import ImageWriter
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
 
-# relevant 'crawlable' information
-# ev3page-finish < start_date & end_date
-# ev3page < page-items
-# ev3page-title < title
-# ev3page-week < week day
-# ev3page-venue < venue
-# ev3page-day < day
-# ev3page-month < month
-# ev3page-year < year
-# ev3page-hour < hours
+def create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, eventname, logo_file, barcode_value):
+    # Define the PDF file buffer
+    buffer = io.BytesIO()
+    
+    # Define the canvas and set the page size and orientation
+    c = canvas.Canvas(buffer, pagesize=landscape(A4))
+    
+    # Set the logo image
+    logo = ImageReader(logo_file)
+    
+    # Define the font styles
+    styles = {
+        'Normal': ParagraphStyle(
+            'normal',
+            fontName='Helvetica',
+            fontSize=18,
+            leading=22,
+            textColor='black',
+            alignment=TA_CENTER,
+        ),
+        'Bold': ParagraphStyle(
+            'bold',
+            fontName='Helvetica-Bold',
+            fontSize=18,
+            leading=22,
+            textColor='black',
+            alignment=TA_CENTER,
+        ),
+        'Heading1': ParagraphStyle(
+            'heading1',
+            fontName='Helvetica',
+            fontSize=28,
+            leading=36,
+            textColor='black',
+            alignment=TA_CENTER,
+        ),
+        'Heading2': ParagraphStyle(
+            'heading2',
+            fontName='Helvetica',
+            fontSize=20,
+            leading=28,
+            textColor='black',
+            alignment=TA_CENTER,
+        ),
+    }
+    
+    # Define the barcode
+    barcode_value = str(barcode_value)
+    barcode_value = barcode_value.rjust(10, '0') # Pad the barcode with leading zeros
+    barcode_image = Code128(barcode_value, writer=ImageWriter())
 
-def functie3():
-    print("Retrieving data from https://festivalfans.nl/agenda/")
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(barcode_value)
+    qr.make(fit=True)
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+    qr_image.save('qr.png')
+    
+    # Define the layout and content of the ticket
+    c.setFillColor(colors.black)
+    c.drawImage(logo, 1*cm, 15*cm, width=5*cm, height=5*cm)
+    c.setFont(styles['Heading1'].fontName, 28)
+    c.drawCentredString(16.85*cm, 18*cm, eventlabel)
+    c.drawCentredString(16.85*cm, 16.8*cm, eventname)
+    c.setFont(styles['Normal'].fontName, 18)
+    c.drawCentredString(16.85*cm, 15*cm, place)
+    c.drawCentredString(16.85*cm, 14.2*cm, venue)
+    c.drawCentredString(16.85*cm, 13*cm, timelabel)
+    c.drawCentredString(16.85*cm, 12.2*cm, time)
+    c.drawCentredString(16.85*cm, 11*cm, namelabel)
+    c.drawCentredString(16.85*cm, 10.2*cm, name)
+    barcode_image.save('barcode')
+    c.drawImage('barcode.png', 1*cm, 2*cm, width=5*cm, height=5*cm)
+    c.drawImage('qr.png', 0.5*cm, 8*cm, width=6*cm, height=6*cm)
+    c.setFont(styles['Bold'].fontName, 14)
+    c.drawCentredString(16.85*cm, 3*cm, barcode_value)
+    
+    # Save the PDF file
+    c.save()
+    
+    # Reset the buffer position to the beginning
+    buffer.seek(0)
+    
+    # Return the PDF file buffer
+    return buffer
 
-    urls = ['https://festivalfans.nl/agenda/']
+# Define the ticket information
+place = "Festival Venue"
+venue = "{ Venue Name }"
+timelabel = "Date & time:"
+time = "{ Saturday, April 30, 2023 at 7:00 PM }"
+namelabel = "Customer:"
+name = "{ TrifectaFest }"
+eventlabel = "Event"
+eventname = "Trifectafest"
+logo_file = "logo.png"
+barcode_value = 1234567895
 
-    events_list = []
+# Create the ticket PDF file
+pdf_file = create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, eventname, logo_file, barcode_value)
 
-    for url in urls:
-        # request the URL and parse the HTML using BeautifulSoup
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
+# Write the PDF file to disk
+with open('ticket.pdf', 'wb') as f:
+    f.write(pdf_file.read())
 
-        # <div class="ev3page">
-        ev3page_amount = r'<div class="[^"]ev3page3[^"]">(.*?)<\/div>'
-        matches = re.search(ev3page_amount, str(soup), re.DOTALL)
-
-        if matches:
-            div_content = matches.group(1)
-            ev3page_number = int(re.sub(r'\D', '', div_content))
-            print(ev3page_number)
-        else:
-            print('No match found')
-
-        # find all the div elements with class 'ev3page'
-        events = soup.find_all('div', class_='ev3page')
-
-        # loop through each event and scrape the relevant information
-        for event in events:
-            # scrape start and end date
-            element = event.find('div', class_='ev3page-finish')
-
-            if element is not None:
-                start_date = event.find('div', class_='ev3page-finish').text.strip()
-                end_date = event.find_all('div', class_='ev3page-finish')[-1].text.strip()
-            else:
-                continue
-            date_range = f"Date: {start_date} - {end_date}"
-
-            # scrape event name
-            link = event.find_all('a', href=re.compile(r'https://festivalfans.nl/event/'))
-            if len(link) > 1:
-                event_name = link[1].text.strip()
-            else:
-                event_name = link[0].text.strip()
-
-            # scrape venue
-            venue = event.find('div', class_='ev3page-venue').text.strip()
-
-            # scrape hours
-            hours = event.find('div', class_='ev3page-hour').text.strip()
-
-            # scrape week day
-            week = event.find('div', class_='ev3page-week').text.strip()
-
-            events_dict ={
-                'Name': event_name,
-                'In': venue,
-                'Day': week,
-                'Date': date_range,
-                'Hours': hours,
-            }
-
-            events_list.append(events_dict)
-
-    # ! return the scraped information for each event
-    events_dict = {'Events': events_list}
-
-    for k in events_dict['Events'][::]:
-        print(k['Date'])
-
-    return(events_dict['Events'][::])
-
-# {"Events":[{"Date":"Date: 31 Mar - 01 Apr","Day":"Vrijdag","Hours":"18:00 - 23:00","In":"GelreDome, Arnhem","Name":"Snollebollekes Live in Concert"},{"Date":"Date: 07 Apr - 09 Apr","Day":"Vrijdag","Hours":"12:00 - 23:00","In":"NDSM-Werf, Amsterdam","Name":"DGTL Amsterdam"}]}
