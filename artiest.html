@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My artists</title>
+</head>
+<body>
+    <h1>Data</h1>
+    <table>
+        <tr>
+            <th>id</th>
+            <th>email</th>
+            <th>name</th>
+            <th>password</th>
+            <th>description</th>
+            <th>genre</th>
+            <th>rekeningrummer</th>
+            <th>type</th>
+            <!-- Add more columns as needed -->
+        </tr>
+        {% for row in data %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ row[5] }}</td>
+            <td>{{ row[6] }}</td>
+            <td>{{ row[7] }}</td>
+            <!-- Render more columns as needed -->
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

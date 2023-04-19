@@ -17,19 +17,6 @@ import sqlite3 as s3
 
 def functie2():
 
-    # # Read from recipe URL List
-    # with open('festivals.json', 'w') as f:
-    #     festivals = f.readlines()
-
-    # # Checking if file doesn't exist yet
-    # if os.path.exists("festivals.json"):
-    #     os.remove("festivals.json")
-    # else:
-    #     print("File is not present in system, making file")
-
-# Make a file containing recipe information
-    # with open('recipe.txt', 'a', encoding='utf-8') as f:
-
         print("Retrieving data from https://festivalfans.nl/agenda/")
 
         urls = ['https://festivalfans.nl/agenda/']
@@ -99,34 +86,8 @@ def functie2():
         # ! return the scraped information for each event
         events_dict = {'Events': events_list}
 
-        # for k in events_dict['Events'][::]:
-        #     print(k)
 
         df = pd.DataFrame.from_dict(events_dict['Events'][::])
         print(df)
 
         return df.to_json(orient= 'table', index= False)
-
-
-
-        # # Append this festival to the file
-        # f.write(f"Name: {event_name}\n In: {venue}\n Day: {week}\n 'Date': {date_range}\n 'Hours': {hours}")
-        # print(f"Name: {event_name} has been added")
-        # for idx_events, event in enumerate(events):
-        #     f.write(f"- {event}\n")
-        #     # Make sure that there is an enter at the end of the ingredient list
-        #     if idx_events == len(events) - 1:
-        #         f.write("\n")
-
-
-
-
-
-
-
-# conn = sqlite3.connect('festivals.db')
-# df.to_sql('events', conn, if_exists='replace', index=False)
-
-#     conn.close()
-
-# {"Events":[{"Date":"Date: 31 Mar - 01 Apr","Day":"Vrijdag","Hours":"18:00 - 23:00","In":"GelreDome, Arnhem","Name":"Snollebollekes Live in Concert"},{"Date":"Date: 07 Apr - 09 Apr","Day":"Vrijdag","Hours":"12:00 - 23:00","In":"NDSM-Werf, Amsterdam","Name":"DGTL Amsterdam"}]}
