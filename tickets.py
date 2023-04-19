@@ -1,16 +1,23 @@
-# import requests
+from flask import jsonify
+import mysql.connector
 
-# # Java endpoint URL
-# url = 'http://blabla.com/java_endpoint'
+def allTickets(config):
+    cnx = mysql.connector.connect(**config)
+    cur = cnx.cursor(buffered=True)
+    cur.execute("SELECT * FROM ticket")
+    results = cur.fetchall()
+    tickets = []
+    for row in results:
+        ticket = {
+            'id': row[0],
+            'end_date': row[1],
+            'start_date': row[2],
+            'cutomer_id': row[3],
+            'festival_id': row[4],
+        }
+        tickets.append(ticket)
 
-# # Send GET request to Java endpoint
-# response = requests.get(url)
+    cur.close()
+    cnx.close()
 
-# # Check als request succesvol is
-# if response.status_code == 200:
-#     # Extract data van response
-#     data = response.json()
-#     # bewerk de data
-#     print(data)
-# else:
-#     print(f'Request failed with status code {response.status_code}')
+    return jsonify({'tickets': tickets})
