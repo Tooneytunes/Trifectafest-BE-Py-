@@ -12,7 +12,20 @@ from barcode.writer import ImageWriter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 
-def create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, eventname, logo_file, barcode_value):
+def create_ticket(venue, time, name):
+    
+    # Define the ticket information
+    place = "Festival Venue"
+    #venue = "{ Venue Name }"
+    timelabel = "Date & time:"
+    #time = "{ Saturday, April 30, 2023 at 7:00 PM }"
+    namelabel = "Customer:"
+    #name = "{ TrifectaFest }"
+    eventlabel = "Event"
+    eventname = "Trifectafest"
+    logo_file = "logo.png"
+    barcode_value = 1234567895
+    
     # Define the PDF file buffer
     buffer = io.BytesIO()
     
@@ -94,25 +107,16 @@ def create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, ev
     # Reset the buffer position to the beginning
     buffer.seek(0)
     
+
+    
+
+    # Create the ticket PDF file
+    #pdf_file = create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, eventname, logo_file, barcode_value)
+
+    # Write the PDF file to disk
+    with open('ticket.pdf', 'wb') as f:
+        f.write(buffer.read())
+    return f
     # Return the PDF file buffer
-    return buffer
-
-# Define the ticket information
-place = "Festival Venue"
-venue = "{ Venue Name }"
-timelabel = "Date & time:"
-time = "{ Saturday, April 30, 2023 at 7:00 PM }"
-namelabel = "Customer:"
-name = "{ TrifectaFest }"
-eventlabel = "Event"
-eventname = "Trifectafest"
-logo_file = "logo.png"
-barcode_value = 1234567895
-
-# Create the ticket PDF file
-pdf_file = create_ticket(place, venue, timelabel, time, namelabel, name, eventlabel, eventname, logo_file, barcode_value)
-
-# Write the PDF file to disk
-with open('ticket.pdf', 'wb') as f:
-    f.write(pdf_file.read())
+    #return buffer
 

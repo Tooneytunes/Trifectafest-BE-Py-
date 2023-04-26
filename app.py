@@ -1,10 +1,13 @@
-from flask import Flask , jsonify
+from flask import Flask , jsonify, request, Response
+from reportlab.pdfgen import canvas
+import json
 import rahul
 import andu
 import toon
 import bookings
 import tickets
 import artists
+import maketicket
 app = Flask(__name__)
 
 config = {
@@ -44,6 +47,17 @@ def get_bookings():
 def get_tickets():
     result = tickets.allTickets(config)
     return result
+
+@app.route("/download", methods=['POST'])
+def download_ticket():
+    #print(request.get_json)
+    data = request.data.decode('utf-8')
+    ticket = json.loads(data)
+   
+    ticket = maketicket.create_ticket(ticket["festival"]["name"], ticket["startDate"], ticket["customer"]["name"])
+    #jsonify(ticket)
+    return "abc"
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
